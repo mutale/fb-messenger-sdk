@@ -12,9 +12,10 @@ use Tgallice\FBMessenger\Model\ThreadSetting;
 use Tgallice\FBMessenger\Model\ThreadSetting\GreetingText;
 use Tgallice\FBMessenger\Model\ThreadSetting\StartedButton;
 use Tgallice\FBMessenger\Model\UserProfile;
+use Tgallice\FBMessenger\Model\ThreadSetting\DomainWhitelisting;
+use Tgallice\FBMessenger\Model\WhitelistedDomains;
 
-class Messenger
-{
+class Messenger {
     use ResponseHandler;
 
     /**
@@ -25,8 +26,7 @@ class Messenger
     /**
      * @param Client $client
      */
-    public function __construct(Client $client)
-    {
+    public function __construct(Client $client) {
         $this->client = $client;
     }
 
@@ -39,8 +39,7 @@ class Messenger
      *
      * @throws ApiException
      */
-    public function sendMessage($recipient, $message, $notificationType = NotificationType::REGULAR)
-    {
+    public function sendMessage($recipient, $message, $notificationType = NotificationType::REGULAR) {
         $message = $this->createMessage($message);
         $options = RequestOptionsFactory::createForMessage($recipient, $message, $notificationType);
         $response = $this->client->send('POST', '/me/messages', null, [], [], $options);
@@ -77,7 +76,7 @@ class Messenger
         ]
     ) {
         $query = [
-            'fields' => implode(',', $fields)
+            'fields' => implode(',', $fields),
         ];
 
         $response = $this->client->get(sprintf('/%s', $userId), $query);
@@ -91,8 +90,7 @@ class Messenger
      *
      * @return bool
      */
-    public function subscribe()
-    {
+    public function subscribe() {
         $response = $this->client->post('/me/subscribed_apps');
         $decoded = $this->decodeResponse($response);
 
@@ -102,8 +100,7 @@ class Messenger
     /**
      * @param $text
      */
-    public function setGreetingText($text)
-    {
+    public function setGreetingText($text) {
         $greeting = new GreetingText($text);
         $setting = $this->buildSetting(ThreadSetting::TYPE_GREETING, null, $greeting);
 
@@ -113,8 +110,7 @@ class Messenger
     /**
      * @param string $payload
      */
-    public function setStartedButton($payload)
-    {
+    public function setStartedButton($payload) {
         $startedButton = new StartedButton($payload);
         $setting = $this->buildSetting(
             ThreadSetting::TYPE_CALL_TO_ACTIONS,
@@ -125,8 +121,7 @@ class Messenger
         $this->postThreadSettings($setting);
     }
 
-    public function deleteStartedButton()
-    {
+    public function deleteStartedButton() {
         $setting = $this->buildSetting(
             ThreadSetting::TYPE_CALL_TO_ACTIONS,
             ThreadSetting::NEW_THREAD
@@ -138,8 +133,7 @@ class Messenger
     /**
      * @param Button[] $menuButtons
      */
-    public function setPersistentMenu(array $menuButtons)
-    {
+    public function setPersistentMenu(array $menuButtons) {
         if (count($menuButtons) > 5) {
             throw new \InvalidArgumentException('You should not set more than 5 menu items.');
         }
@@ -153,8 +147,7 @@ class Messenger
         $this->postThreadSettings($setting);
     }
 
-    public function deletePersistentMenu()
-    {
+    public function deletePersistentMenu() {
         $setting = $this->buildSetting(
             ThreadSetting::TYPE_CALL_TO_ACTIONS,
             ThreadSetting::EXISTING_THREAD
@@ -163,8 +156,7 @@ class Messenger
         $this->deleteThreadSettings($setting);
     }
 
-    public function deleteGreetingText()
-    {
+    public function deleteGreetingText() {
         $setting = $this->buildSetting(ThreadSetting::TYPE_GREETING);
 
         $this->deleteThreadSettings($setting);
@@ -177,28 +169,48 @@ class Messenger
      *
      * @return Messenger
      */
-    public static function create($token)
-    {
+    public static function create($token) {
         $client = new Client($token);
 
         return new self($client);
     }
 
-
     /**
      * @param array $setting
      */
-    private function postThreadSettings(array $setting)
-    {
+    private function postThreadSettings(array $setting) {
         $this->client->post('/me/thread_settings', $setting);
     }
 
     /**
      * @param array $setting
      */
-    private function deleteThreadSettings(array $setting)
-    {
+    private function deleteThreadSettings(array $setting) {
         $this->client->send('DELETE', '/me/thread_settings', $setting);
+    }
+    /**
+     * @param array $domains
+     * @param string $action
+     */
+    public function setDomainWhitelisting($domains, $action = DomainWhitelisting::TYPE_ADD) {
+        $domainWhitelisting = new DomainWhitelisting($domains, $action);
+        $setting = $this->buildSetting(ThreadSetting::TYPE_DOMAIN_WHITELISTING, null, $domainWhitelisting, true);
+
+        $this->postThreadSettings($setting);
+    }
+
+    /**
+     * @return array
+     */
+    public function getDomainWhitelisting() {
+        $query = [
+            'fields' => DomainWhitelisting::WHITELISTED_DOMAINS,
+        ];
+
+        $response = $this->client->get('/me/thread_settings', $query);
+        $data = $this->decodeResponse($response);
+
+        return WhitelistedDomains::create($data);
     }
 
     /**
@@ -208,8 +220,7 @@ class Messenger
      *
      * @return array
      */
-    private function buildSetting($type, $threadState = null, $value = null)
-    {
+    private function buildSetting($type, $threadState = null, $value = null, $mergeValueWithSetting = false) {
         $setting = [
             'setting_type' => $type,
         ];
@@ -218,7 +229,10 @@ class Messenger
             $setting['thread_state'] = $threadState;
         }
 
-        if (!empty($value)) {
+        if ($mergeValueWithSetting === true) {
+            $setting = array_merge($setting, $value->jsonSerialize());
+        } else if (!empty($value)) {
+
             $setting[$type] = $value;
         }
 
@@ -230,8 +244,7 @@ class Messenger
      *
      * @return Message
      */
-    private function createMessage($message)
-    {
+    private function createMessage($message) {
         if ($message instanceof Message) {
             return $message;
         }

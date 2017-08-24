@@ -16,23 +16,27 @@ use Tgallice\FBMessenger\Model\Message;
 use Tgallice\FBMessenger\Model\MessageResponse;
 use Tgallice\FBMessenger\Model\ThreadSetting;
 use Tgallice\FBMessenger\Model\UserProfile;
+use Tgallice\FBMessenger\Model\WhitelistedDomains;
 use Tgallice\FBMessenger\NotificationType;
 use Tgallice\FBMessenger\TypingIndicator;
 
-class MessengerSpec extends ObjectBehavior
-{
-    function let(Client $client)
-    {
+class MessengerSpec extends ObjectBehavior {
+    /**
+     * @param Client $client
+     */
+    function let(Client $client) {
         $this->beConstructedWith($client);
     }
 
-    function it_is_initializable()
-    {
+    function it_is_initializable() {
         $this->shouldHaveType('Tgallice\FBMessenger\Messenger');
     }
 
-    function it_get_user_profile($client, ResponseInterface $response)
-    {
+    /**
+     * @param $client
+     * @param ResponseInterface $response
+     */
+    function it_get_user_profile($client, ResponseInterface $response) {
         $response->getBody()->willReturn('
             {
                 "first_name": "Peter",
@@ -48,25 +52,29 @@ class MessengerSpec extends ObjectBehavior
         $client->get('/user_id', $query)->willReturn($response);
 
         $userProfile = new UserProfile([
-            'first_name' => 'Peter',
-            'last_name' => 'Chang',
-            'profile_pic' => 'https://fbcdn-profile-a.akamaihd.net/hprofile70ec9c19b18'
+            'first_name'  => 'Peter',
+            'last_name'   => 'Chang',
+            'profile_pic' => 'https://fbcdn-profile-a.akamaihd.net/hprofile70ec9c19b18',
         ]);
 
         $this->getUserProfile('user_id', ['first_name', 'last_name', 'profile_pic'])
             ->shouldBeLike($userProfile);
     }
 
-    function it_send_message_to_user($client, Message $message, ResponseInterface $response)
-    {
+    /**
+     * @param $client
+     * @param Message $message
+     * @param ResponseInterface $response
+     */
+    function it_send_message_to_user($client, Message $message, ResponseInterface $response) {
         $message->hasFileToUpload()->willReturn(false);
 
         $client->send('POST', '/me/messages', null, [], [], [
             RequestOptions::JSON => [
-                'recipient' => ['id' =>'1008372609250235'],
-                'message' => $message,
+                'recipient'         => ['id' => '1008372609250235'],
+                'message'           => $message,
                 'notification_type' => NotificationType::REGULAR,
-            ]
+            ],
         ])->willReturn($response);
 
         $response->getBody()->willReturn('
@@ -81,8 +89,12 @@ class MessengerSpec extends ObjectBehavior
         );
     }
 
-    function it_send_text_message_to_user($client, ResponseInterface $response)
-    {
+    /**
+     * @param $client
+     * @param ResponseInterface $response
+     * @return mixed
+     */
+    function it_send_text_message_to_user($client, ResponseInterface $response) {
         $client->send('POST', '/me/messages', null, [], [], Argument::that(function ($value) {
             $message = $value['json']['message'];
 
@@ -105,8 +117,13 @@ class MessengerSpec extends ObjectBehavior
         );
     }
 
-    function it_send_template_message_to_user($client, Template $template, ResponseInterface $response)
-    {
+    /**
+     * @param $client
+     * @param Template $template
+     * @param ResponseInterface $response
+     * @return mixed
+     */
+    function it_send_template_message_to_user($client, Template $template, ResponseInterface $response) {
         $client->send('POST', '/me/messages', null, [], [], Argument::that(function ($value) use ($template) {
             $message = $value['json']['message'];
 
@@ -135,8 +152,13 @@ class MessengerSpec extends ObjectBehavior
         );
     }
 
-    function it_send_attachment_message_to_user($client, Attachment $attachment, ResponseInterface $response)
-    {
+    /**
+     * @param $client
+     * @param Attachment $attachment
+     * @param ResponseInterface $response
+     * @return mixed
+     */
+    function it_send_attachment_message_to_user($client, Attachment $attachment, ResponseInterface $response) {
         $client->send('POST', '/me/messages', null, [], [], Argument::that(function ($value) use ($attachment) {
             $message = $value['json']['message'];
 
@@ -160,14 +182,16 @@ class MessengerSpec extends ObjectBehavior
         );
     }
 
-    function it_throw_an_exception_if_try_to_send_bad_message_type()
-    {
+    function it_throw_an_exception_if_try_to_send_bad_message_type() {
         $exception = new \InvalidArgumentException('$message should be a string, Message, Attachment or Template');
         $this->shouldThrow($exception)->duringSendMessage('1008372609250235', 1);
     }
 
-    function it_subscribe_the_app($client, ResponseInterface $response)
-    {
+    /**
+     * @param $client
+     * @param ResponseInterface $response
+     */
+    function it_subscribe_the_app($client, ResponseInterface $response) {
         $response->getBody()->willReturn('
             {
               "success": true
@@ -181,11 +205,13 @@ class MessengerSpec extends ObjectBehavior
     }
 
     // Thread settings
-    function it_should_define_greeting_text($client)
-    {
+    /**
+     * @param $client
+     */
+    function it_should_define_greeting_text($client) {
         $expectedBody = [
             'setting_type' => 'greeting',
-            'greeting' => [
+            'greeting'     => [
                 'text' => 'my text',
             ],
         ];
@@ -197,8 +223,10 @@ class MessengerSpec extends ObjectBehavior
         $this->setGreetingText('my text');
     }
 
-    function it_should_delete_greeting_text($client)
-    {
+    /**
+     * @param $client
+     */
+    function it_should_delete_greeting_text($client) {
         $body = [
             'setting_type' => 'greeting',
         ];
@@ -208,13 +236,15 @@ class MessengerSpec extends ObjectBehavior
         $this->deleteGreetingText();
     }
 
-    function it_should_define_get_started_button($client)
-    {
+    /**
+     * @param $client
+     */
+    function it_should_define_get_started_button($client) {
         $expectedBody = [
-            'setting_type' => 'call_to_actions',
-            'thread_state' => 'new_thread',
+            'setting_type'    => 'call_to_actions',
+            'thread_state'    => 'new_thread',
             'call_to_actions' => [
-                ['payload' => 'my_payload']
+                ['payload' => 'my_payload'],
             ],
         ];
 
@@ -225,8 +255,10 @@ class MessengerSpec extends ObjectBehavior
         $this->setStartedButton('my_payload');
     }
 
-    function it_should_delete_started_button($client)
-    {
+    /**
+     * @param $client
+     */
+    function it_should_delete_started_button($client) {
         $body = [
             'setting_type' => 'call_to_actions',
             'thread_state' => 'new_thread',
@@ -237,20 +269,22 @@ class MessengerSpec extends ObjectBehavior
         $this->deleteStartedButton();
     }
 
-    function it_should_define_persistent_menu($client)
-    {
+    /**
+     * @param $client
+     */
+    function it_should_define_persistent_menu($client) {
         $pb1 = new Postback('Help', 'DEVELOPER_DEFINED_PAYLOAD_FOR_HELP');
         $pb2 = new Postback('Start a New Order', 'DEVELOPER_DEFINED_PAYLOAD_FOR_START_ORDER');
         $wu = new WebUrl('View Website', 'http://petersapparel.parseapp.com/');
 
         $body = [
-            'setting_type' => 'call_to_actions',
-            'thread_state' => 'existing_thread',
+            'setting_type'    => 'call_to_actions',
+            'thread_state'    => 'existing_thread',
             'call_to_actions' => [
                 $pb1,
                 $pb2,
                 $wu,
-            ]
+            ],
         ];
 
         $client->post('/me/thread_settings', $body)->shouldBeCalled();
@@ -262,16 +296,20 @@ class MessengerSpec extends ObjectBehavior
         ]);
     }
 
-    function it_should_not_add_more_than_5_menu_buttons(Button $menuButton)
-    {
+    /**
+     * @param Button $menuButton
+     */
+    function it_should_not_add_more_than_5_menu_buttons(Button $menuButton) {
         $exception = new \InvalidArgumentException('You should not set more than 5 menu items.');
         $this->shouldThrow($exception)->duringSetPersistentMenu([
-            $menuButton, $menuButton, $menuButton, $menuButton, $menuButton, $menuButton
+            $menuButton, $menuButton, $menuButton, $menuButton, $menuButton, $menuButton,
         ]);
     }
 
-    function it_should_delete_persistent_menu($client)
-    {
+    /**
+     * @param $client
+     */
+    function it_should_delete_persistent_menu($client) {
         $body = [
             'setting_type' => 'call_to_actions',
             'thread_state' => 'existing_thread',
@@ -282,11 +320,13 @@ class MessengerSpec extends ObjectBehavior
         $this->deletePersistentMenu();
     }
 
-    function it_should_set_typing_status($client)
-    {
+    /**
+     * @param $client
+     */
+    function it_should_set_typing_status($client) {
         $options = [
             'json' => [
-                'recipient' => [
+                'recipient'     => [
                     'id' => 'USER_ID',
                 ],
                 'sender_action' => 'typing_on',
@@ -296,5 +336,58 @@ class MessengerSpec extends ObjectBehavior
         $client->send('POST', '/me/messages', null, [], [], $options)->shouldBeCalled();
 
         $this->setTypingStatus('USER_ID', TypingIndicator::TYPING_ON);
+    }
+
+    /**
+     * @param $client
+     */
+    function it_should_define_domain_whitelisting($client) {
+        $expectedBody = [
+            'setting_type'        => 'domain_whitelisting',
+            'whitelisted_domains' => ['https://www.google.com'],
+            'domain_action_type'  => 'add',
+        ];
+
+        $client->post('/me/thread_settings', Argument::that(function ($body) use ($expectedBody) {
+            return json_encode($body) === json_encode($expectedBody);
+        }))->shouldBeCalled();
+
+        $this->setDomainWhitelisting(['https://www.google.com']);
+    }
+
+    /**
+     * @param $client
+     * @param ResponseInterface $response
+     */
+    function it_get_domain_whitelisting($client, ResponseInterface $response) {
+        $response->getBody()->willReturn('
+            {
+                "data" : [{
+                    "whitelisted_domains" : [
+                        "domain_1",
+                        "domain_2"
+                    ],
+                    "id" : "123456"
+                }]
+            }
+        ');
+
+        $query = [
+            'fields' => 'whitelisted_domains',
+        ];
+
+        $client->get('/me/thread_settings', $query)->willReturn($response);
+
+        $whitelistedDomains = new WhitelistedDomains([
+            'data' => [[
+                'whitelisted_domains' => [
+                    'domain_1',
+                    'domain_2',
+                ],
+                'id'                  => '123456',
+            ]],
+        ]);
+
+        $this->getDomainWhitelisting()->shouldBeLike($whitelistedDomains);
     }
 }

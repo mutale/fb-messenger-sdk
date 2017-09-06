@@ -104,7 +104,7 @@ class Messenger {
         $greeting = new GreetingText($text);
         $setting = $this->buildSetting(ThreadSetting::TYPE_GREETING, null, $greeting);
 
-        $this->postThreadSettings($setting);
+        return $this->postThreadSettings($setting);
     }
 
     /**
@@ -118,16 +118,19 @@ class Messenger {
             [$startedButton]
         );
 
-        $this->postThreadSettings($setting);
+        return $this->postThreadSettings($setting);
     }
 
+    /**
+     * @return mixed
+     */
     public function deleteStartedButton() {
         $setting = $this->buildSetting(
             ThreadSetting::TYPE_CALL_TO_ACTIONS,
             ThreadSetting::NEW_THREAD
         );
 
-        $this->deleteThreadSettings($setting);
+        return $this->deleteThreadSettings($setting);
     }
 
     /**
@@ -144,22 +147,28 @@ class Messenger {
             $menuButtons
         );
 
-        $this->postThreadSettings($setting);
+        return $this->postThreadSettings($setting);
     }
 
+    /**
+     * @return mixed
+     */
     public function deletePersistentMenu() {
         $setting = $this->buildSetting(
             ThreadSetting::TYPE_CALL_TO_ACTIONS,
             ThreadSetting::EXISTING_THREAD
         );
 
-        $this->deleteThreadSettings($setting);
+        return $this->deleteThreadSettings($setting);
     }
 
+    /**
+     * @return mixed
+     */
     public function deleteGreetingText() {
         $setting = $this->buildSetting(ThreadSetting::TYPE_GREETING);
 
-        $this->deleteThreadSettings($setting);
+        return $this->deleteThreadSettings($setting);
     }
 
     /**
@@ -179,14 +188,16 @@ class Messenger {
      * @param array $setting
      */
     private function postThreadSettings(array $setting) {
-        $this->client->post('/me/thread_settings', $setting);
+        $response = $this->client->post('/me/thread_settings', $setting);
+        return $this->decodeResponse($response);
     }
 
     /**
      * @param array $setting
      */
     private function deleteThreadSettings(array $setting) {
-        $this->client->send('DELETE', '/me/thread_settings', $setting);
+        $response = $this->client->send('DELETE', '/me/thread_settings', $setting);
+        return $this->decodeResponse($response);
     }
     /**
      * @param array $domains
@@ -196,7 +207,7 @@ class Messenger {
         $domainWhitelisting = new DomainWhitelisting($domains, $action);
         $setting = $this->buildSetting(ThreadSetting::TYPE_DOMAIN_WHITELISTING, null, $domainWhitelisting, true);
 
-        $this->postThreadSettings($setting);
+        return $this->postThreadSettings($setting);
     }
 
     /**

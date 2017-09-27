@@ -24,6 +24,11 @@ class Messenger {
     private $client;
 
     /**
+     * @var array
+     */
+    private $extraSettings = array();
+
+    /**
      * @param Client $client
      */
     public function __construct(Client $client) {
@@ -99,9 +104,13 @@ class Messenger {
 
     /**
      * @param $text
+     * @param $extraSettings
+     *
+     * @return mixed
      */
-    public function setGreetingText($text) {
+    public function setGreetingText($text, array $extraSettings = array()) {
         $greeting = new GreetingText($text);
+        $this->extraSettings = $extraSettings;
         $setting = $this->buildSetting(ThreadSetting::TYPE_GREETING, null, $greeting);
 
         return $this->postThreadSettings($setting);
@@ -109,9 +118,13 @@ class Messenger {
 
     /**
      * @param string $payload
+     * @param $extraSettings
+     *
+     * @return mixed
      */
-    public function setStartedButton($payload) {
+    public function setStartedButton($payload, array $extraSettings = array()) {
         $startedButton = new StartedButton($payload);
+        $this->extraSettings = $extraSettings;
         $setting = $this->buildSetting(
             ThreadSetting::TYPE_CALL_TO_ACTIONS,
             ThreadSetting::NEW_THREAD,
@@ -135,12 +148,15 @@ class Messenger {
 
     /**
      * @param Button[] $menuButtons
+     * @param $extraSettings
+     *
+     * @return mixed
      */
-    public function setPersistentMenu(array $menuButtons) {
+    public function setPersistentMenu(array $menuButtons, array $extraSettings = array()) {
         if (count($menuButtons) > 5) {
             throw new \InvalidArgumentException('You should not set more than 5 menu items.');
         }
-
+        $this->extraSettings = $extraSettings;
         $setting = $this->buildSetting(
             ThreadSetting::TYPE_CALL_TO_ACTIONS,
             ThreadSetting::EXISTING_THREAD,
@@ -186,6 +202,8 @@ class Messenger {
 
     /**
      * @param array $setting
+     *
+     * @return mixed
      */
     private function postThreadSettings(array $setting) {
         $response = $this->client->post('/me/thread_settings', $setting);
@@ -194,6 +212,8 @@ class Messenger {
 
     /**
      * @param array $setting
+     *
+     * @return mixed
      */
     private function deleteThreadSettings(array $setting) {
         $response = $this->client->send('DELETE', '/me/thread_settings', $setting);
@@ -202,6 +222,8 @@ class Messenger {
     /**
      * @param array $domains
      * @param string $action
+     *
+     * @return mixed
      */
     public function setDomainWhitelisting($domains, $action = DomainWhitelisting::TYPE_ADD) {
         $domainWhitelisting = new DomainWhitelisting($domains, $action);
@@ -211,7 +233,7 @@ class Messenger {
     }
 
     /**
-     * @return array
+     * @return WhitelistedDomains
      */
     public function getDomainWhitelisting() {
         $query = [
@@ -228,6 +250,7 @@ class Messenger {
      * @param string $type
      * @param null|string $threadState
      * @param mixed $value
+     * @param bool $mergeValueWithSetting
      *
      * @return array
      */
@@ -246,6 +269,8 @@ class Messenger {
 
             $setting[$type] = $value;
         }
+
+        $setting = array_merge($setting, $this->extraSettings);
 
         return $setting;
     }

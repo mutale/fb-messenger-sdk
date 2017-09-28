@@ -7,6 +7,7 @@ interface ThreadSetting {
     const TYPE_GREETING = 'greeting';
     const TYPE_CALL_TO_ACTIONS = 'call_to_actions';
     const TYPE_DOMAIN_WHITELISTING = 'domain_whitelisting';
+    const TYPE_GET_STARTED = 'get_started';
 
     // Thread state
     const NEW_THREAD = 'new_thread';

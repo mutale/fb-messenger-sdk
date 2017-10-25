@@ -114,13 +114,13 @@ class Messenger {
     public function setGreetingText($defaultText, $localizedTexts = [], array $extraSettings = []) {
 
         $greetingTexts = array_merge(
-        [
             [
-            'locale' => 'default',
-            'text' => $defaultText
-            ]
-        ],
-        $localizedTexts
+                [
+                    'locale' => 'default',
+                    'text' => $defaultText
+                ]
+            ],
+            $localizedTexts
         );
         $greeting = new GreetingText($greetingTexts);
         $this->extraSettings = $extraSettings;
@@ -165,15 +165,15 @@ class Messenger {
      * @return mixed
      */
     public function setPersistentMenu(array $menuButtons, array $extraSettings = array()) {
-        if (count($menuButtons) > 5) {
-            throw new \InvalidArgumentException('You should not set more than 5 menu items.');
+        if (count($menuButtons) > 3) {
+            throw new \InvalidArgumentException('You should not set more than 3 menu items.');
         }
-        $this->extraSettings = $extraSettings;
+        $data[ThreadSetting::TYPE_CALL_TO_ACTIONS] = $menuButtons;
+        $data = array_merge($data, $extraSettings);
         $setting = $this->buildSetting(
-            ThreadSetting::TYPE_CALL_TO_ACTIONS,
-            $menuButtons
+            ThreadSetting::TYPE_PERSISTENT_MENU,
+            [$data]
         );
-
         return $this->postThreadSettings($setting);
     }
 

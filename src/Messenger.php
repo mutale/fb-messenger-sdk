@@ -171,7 +171,6 @@ class Messenger {
         $this->extraSettings = $extraSettings;
         $setting = $this->buildSetting(
             ThreadSetting::TYPE_CALL_TO_ACTIONS,
-            ThreadSetting::EXISTING_THREAD,
             $menuButtons
         );
 

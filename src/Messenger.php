@@ -182,8 +182,7 @@ class Messenger {
      */
     public function deletePersistentMenu() {
         $setting = $this->buildSetting(
-            ThreadSetting::TYPE_CALL_TO_ACTIONS,
-            ThreadSetting::EXISTING_THREAD
+            ThreadSetting::TYPE_CALL_TO_ACTIONS
         );
 
         return $this->deleteThreadSettings($setting);
@@ -238,7 +237,7 @@ class Messenger {
      */
     public function setDomainWhitelisting($domains, $action = DomainWhitelisting::TYPE_ADD) {
         $domainWhitelisting = new DomainWhitelisting($domains, $action);
-        $setting = $this->buildSetting(ThreadSetting::TYPE_DOMAIN_WHITELISTING, null, $domainWhitelisting, true);
+        $setting = $this->buildSetting(ThreadSetting::TYPE_DOMAIN_WHITELISTING, $domainWhitelisting, true);
 
         return $this->postThreadSettings($setting);
     }

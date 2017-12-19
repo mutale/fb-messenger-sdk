@@ -9,9 +9,9 @@ use Tgallice\FBMessenger\Model\DefaultAction;
 class Element extends AbstractElement
 {
     /**
-     * @var null|Button
+     * @var []|Button
      */
-    private $button;
+    private $buttons;
 
     /**
      * @var null|DefaultAction
@@ -22,19 +22,19 @@ class Element extends AbstractElement
      * @param string $title
      * @param null|string $subtitle
      * @param null|string $imageUrl
-     * @param Button|null $button
+     * @param Button|[] $buttons
      * @param DefaultAction|null $defaultAction
      */
-    public function __construct($title, $subtitle = null, $imageUrl = null, Button $button = null, DefaultAction $defaultAction = null)
+    public function __construct($title, $subtitle = null, $imageUrl = null, $buttons = [], DefaultAction $defaultAction = null)
     {
         parent::__construct($title, $subtitle, $imageUrl);
-        $this->button = $button;
+        $this->buttons = $buttons;
         $this->defaultAction = $defaultAction;
     }
 
-    public function getButton()
+    public function getButtons()
     {
-        return $this->button;
+        return $this->buttons;
     }
 
     public function getDefaultAction()
@@ -51,7 +51,7 @@ class Element extends AbstractElement
             'title' => $this->getTitle(),
             'subtitle' => $this->getSubtitle(),
             'image_url' => $this->getImageUrl(),
-            'buttons' => $this->button ? [$this->button] : null,
+            'buttons' => ($this->buttons instanceof Button) ? [$this->buttons] : $this->buttons,
             'default_action' => $this->defaultAction,
         ];
     }

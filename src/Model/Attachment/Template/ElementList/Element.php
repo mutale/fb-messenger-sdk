@@ -25,7 +25,7 @@ class Element extends AbstractElement
      * @param Button|[] $buttons
      * @param DefaultAction|null $defaultAction
      */
-    public function __construct($title, $subtitle = null, $imageUrl = null, $buttons = [], DefaultAction $defaultAction = null)
+    public function __construct($title, $subtitle = null, $imageUrl = null, $buttons = null, DefaultAction $defaultAction = null)
     {
         parent::__construct($title, $subtitle, $imageUrl);
         $this->buttons = $buttons;
@@ -47,7 +47,7 @@ class Element extends AbstractElement
      */
     public function jsonSerialize()
     {
-        return [
+        $retVal = [
             'title' => $this->getTitle(),
             'subtitle' => $this->getSubtitle(),
             'image_url' => $this->getImageUrl(),

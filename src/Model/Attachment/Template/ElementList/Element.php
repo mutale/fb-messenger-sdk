@@ -47,7 +47,7 @@ class Element extends AbstractElement
      */
     public function jsonSerialize()
     {
-        $retVal = [
+        return [
             'title' => $this->getTitle(),
             'subtitle' => $this->getSubtitle(),
             'image_url' => $this->getImageUrl(),
